@@ -1,29 +1,14 @@
-// 1. UTILITAS & MANAJEMEN TAB (Studi Kasus 3.4)
+/**
+ * assets/script.js
+ * Perbaikan State Tab via URL Query, Event Delegation, & Form Validations.
+ */
+
+// ==========================================
+// 1. UTILITAS DOM & MODAL
+// ==========================================
 const $ = (selector) => document.querySelector(selector);
 const $all = (selector) => document.querySelectorAll(selector);
 const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-
-// State Tab
-const TAB_KEY = "pabwe-p3-tab";
-const tabs = $all(".tab-btn");
-const panels = $all(".tab-panel");
-
-function switchTab(tabId) {
-  // Update tampilan panel
-  panels.forEach(p => p.classList.toggle("hidden", p.id !== `panel-${tabId}`));
-  // Update styling tombol tab
-  tabs.forEach(btn => {
-    const isActive = btn.dataset.tab === tabId;
-    btn.setAttribute("aria-selected", isActive);
-    btn.className = `tab-btn flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-      isActive ? "tab-active" : "tab-inactive"
-    }`;
-  });
-  localStorage.setItem(TAB_KEY, tabId);
-}
-
-tabs.forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
-switchTab(localStorage.getItem(TAB_KEY) || "expense"); // Muat tab terakhir atau default ke expense
 
 // Sistem Modal Global
 let deleteActionCallback = null;
@@ -49,15 +34,48 @@ $("#btn-confirm-delete").addEventListener("click", () => {
   closeModal("modal-delete");
 });
 
+// ==========================================
+// 2. MANAJEMEN TAB (via Query URL)
+// ==========================================
+const tabs = $all(".tab-btn");
+const panels = $all(".tab-panel");
+
+function switchTab(tabId) {
+  // Update UI Panel & Button
+  panels.forEach(p => p.classList.toggle("hidden", p.id !== `panel-${tabId}`));
+  tabs.forEach(btn => {
+    const isActive = btn.dataset.tab === tabId;
+    btn.setAttribute("aria-selected", isActive);
+    btn.className = `tab-btn flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
+      isActive ? "tab-active" : "tab-inactive"
+    }`;
+  });
+
+  // Update State via Query String & history.replaceState
+  const url = new URL(window.location);
+  url.searchParams.set("tab", tabId);
+  window.history.replaceState(null, "", url);
+}
+
+// Inisialisasi Tab dari parameter URL, default: expense
+const urlParams = new URLSearchParams(window.location.search);
+const activeTab = urlParams.get("tab") || "expense";
+switchTab(activeTab);
+
+tabs.forEach(btn => btn.addEventListener("click", () => switchTab(btn.dataset.tab)));
+
 
 // ==========================================
-// 2. EXPENSE TRACKER (Studi Kasus 3.1)
+// 3. EXPENSE TRACKER
 // ==========================================
 const EXP_KEY = "pabwe-p3-expenses";
 let expenses = JSON.parse(localStorage.getItem(EXP_KEY)) || [];
 
 const expForm = $("#expense-form");
 const expList = $("#expense-list");
+
+// Set default input date ke hari ini
+$("#exp-date").valueAsDate = new Date();
 
 function saveExpenses() { localStorage.setItem(EXP_KEY, JSON.stringify(expenses)); }
 
@@ -70,7 +88,7 @@ function renderExpenses() {
     (filterType === "Semua" || exp.type === filterType)
   );
 
-  // Sorting descending (terbaru)
+  // Sorting descending (terbaru berdasarkan tanggal)
   filtered.sort((a, b) => b.date - a.date);
 
   expList.innerHTML = "";
@@ -106,8 +124,8 @@ function renderExpenses() {
       <div class="flex items-center gap-4 shrink-0 justify-between sm:justify-end">
         <span class="font-bold ${isIncome ? 'text-emerald-600' : 'text-rose-600'}">${isIncome ? '+' : '-'}${formatRupiah(exp.amount)}</span>
         <div class="flex gap-2">
-          <button onclick="editExpense('${exp.id}')" class="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-sky-600 hover:border-sky-200 flex items-center justify-center transition"><i class="ti ti-pencil"></i></button>
-          <button onclick="deleteExpenseConfirm('${exp.id}')" class="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition"><i class="ti ti-trash"></i></button>
+          <button data-action="edit-exp" data-id="${exp.id}" class="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-sky-600 hover:border-sky-200 flex items-center justify-center transition"><i class="ti ti-pencil pointer-events-none"></i></button>
+          <button data-action="delete-exp" data-id="${exp.id}" class="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-rose-600 hover:border-rose-200 flex items-center justify-center transition"><i class="ti ti-trash pointer-events-none"></i></button>
         </div>
       </div>
     `;
@@ -115,55 +133,77 @@ function renderExpenses() {
   });
 }
 
+// Simpan Expense Baru
 expForm.addEventListener("submit", e => {
   e.preventDefault();
+  const amount = Number($("#exp-amount").value);
+  if (isNaN(amount) || amount <= 0) return alert("Nominal harus lebih dari 0!");
+  
+  const dateStr = $("#exp-date").value;
+  const timestamp = dateStr ? new Date(dateStr).getTime() : Date.now();
+
   const exp = {
     id: Date.now().toString(),
     title: $("#exp-title").value.trim(),
     category: $("#exp-category").value.trim(),
-    amount: Number($("#exp-amount").value),
+    amount: amount,
     type: $("#exp-type").value,
-    date: Date.now()
+    date: timestamp
   };
   expenses.push(exp);
   saveExpenses(); renderExpenses(); expForm.reset();
+  $("#exp-date").valueAsDate = new Date();
 });
 
-// Aksi Edit & Hapus Expense
-window.editExpense = (id) => {
-  const exp = expenses.find(e => e.id === id);
-  if(!exp) return;
-  $("#edit-exp-id").value = exp.id;
-  $("#edit-exp-title").value = exp.title;
-  $("#edit-exp-category").value = exp.category;
-  $("#edit-exp-amount").value = exp.amount;
-  $("#edit-exp-type").value = exp.type;
-  openModal("modal-edit-expense");
-};
+// Event Delegation List Expense (Ubah / Hapus)
+expList.addEventListener("click", e => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+
+  if (action === "edit-exp") {
+    const exp = expenses.find(e => e.id === id);
+    if (!exp) return;
+    $("#edit-exp-id").value = exp.id;
+    $("#edit-exp-title").value = exp.title;
+    $("#edit-exp-category").value = exp.category;
+    $("#edit-exp-amount").value = exp.amount;
+    $("#edit-exp-type").value = exp.type;
+    // Format YYYY-MM-DD for date input
+    const dateObj = new Date(exp.date);
+    $("#edit-exp-date").value = dateObj.toISOString().split('T')[0];
+    openModal("modal-edit-expense");
+  } 
+  else if (action === "delete-exp") {
+    deleteActionCallback = () => {
+      expenses = expenses.filter(e => e.id !== id);
+      saveExpenses(); renderExpenses();
+    };
+    openModal("modal-delete");
+  }
+});
 
 $("#edit-expense-form").addEventListener("submit", e => {
   e.preventDefault();
+  const amount = Number($("#edit-exp-amount").value);
+  if (isNaN(amount) || amount <= 0) return alert("Nominal harus lebih dari 0!");
+
   const id = $("#edit-exp-id").value;
   const index = expenses.findIndex(e => e.id === id);
-  if(index !== -1) {
+  if (index !== -1) {
     expenses[index] = {
       ...expenses[index],
       title: $("#edit-exp-title").value.trim(),
       category: $("#edit-exp-category").value.trim(),
-      amount: Number($("#edit-exp-amount").value),
-      type: $("#edit-exp-type").value
+      amount: amount,
+      type: $("#edit-exp-type").value,
+      date: new Date($("#edit-exp-date").value).getTime()
     };
     saveExpenses(); renderExpenses(); closeModal("modal-edit-expense");
   }
 });
-
-window.deleteExpenseConfirm = (id) => {
-  deleteActionCallback = () => {
-    expenses = expenses.filter(e => e.id !== id);
-    saveExpenses(); renderExpenses();
-  };
-  openModal("modal-delete");
-};
 
 $("#exp-search").addEventListener("input", renderExpenses);
 $("#exp-filter-type").addEventListener("change", renderExpenses);
@@ -171,7 +211,7 @@ renderExpenses();
 
 
 // ==========================================
-// 3. BOOKMARK MANAGER (Studi Kasus 3.2)
+// 4. BOOKMARK MANAGER
 // ==========================================
 const BM_KEY = "pabwe-p3-bookmarks";
 let bookmarks = JSON.parse(localStorage.getItem(BM_KEY)) || [];
@@ -180,6 +220,16 @@ const bmForm = $("#bookmark-form");
 const bmList = $("#bookmark-list");
 
 function saveBookmarks() { localStorage.setItem(BM_KEY, JSON.stringify(bookmarks)); }
+
+// Regex ketat memastikan awalan http:// atau https://
+function isValidURL(string) {
+  try {
+    const url = new URL(string);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch (_) {
+    return false;  
+  }
+}
 
 function renderBookmarks() {
   const keyword = $("#bm-search").value.toLowerCase();
@@ -207,8 +257,8 @@ function renderBookmarks() {
     card.className = "flex flex-col p-4 border border-slate-200 rounded-xl hover:shadow-md transition bg-white relative group";
     card.innerHTML = `
       <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition flex gap-1 bg-white p-1 rounded-lg shadow-sm border border-slate-100">
-        <button onclick="editBookmark('${bm.id}')" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-sky-600 rounded"><i class="ti ti-pencil"></i></button>
-        <button onclick="deleteBookmarkConfirm('${bm.id}')" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-600 rounded"><i class="ti ti-trash"></i></button>
+        <button data-action="edit-bm" data-id="${bm.id}" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-sky-600 rounded"><i class="ti ti-pencil pointer-events-none"></i></button>
+        <button data-action="delete-bm" data-id="${bm.id}" class="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-rose-600 rounded"><i class="ti ti-trash pointer-events-none"></i></button>
       </div>
       <span class="inline-block px-2 py-1 bg-sky-100 text-sky-700 text-xs font-semibold rounded-md w-fit mb-3">${bm.category}</span>
       <h3 class="font-bold text-slate-800 truncate pr-14">${bm.title}</h3>
@@ -221,16 +271,15 @@ function renderBookmarks() {
   });
 }
 
-function ensureProtocol(url) {
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
-}
-
 bmForm.addEventListener("submit", e => {
   e.preventDefault();
+  const urlVal = $("#bm-url").value.trim();
+  if (!isValidURL(urlVal)) return alert("URL tidak valid! Wajib menyertakan http:// atau https://");
+
   const bm = {
     id: Date.now().toString(),
     title: $("#bm-title").value.trim(),
-    url: ensureProtocol($("#bm-url").value.trim()),
+    url: urlVal,
     category: $("#bm-category").value.trim(),
     notes: $("#bm-notes").value.trim(),
     date: Date.now()
@@ -239,27 +288,45 @@ bmForm.addEventListener("submit", e => {
   saveBookmarks(); renderBookmarks(); bmForm.reset();
 });
 
-// Aksi Edit & Hapus Bookmark
-window.editBookmark = (id) => {
-  const bm = bookmarks.find(b => b.id === id);
-  if(!bm) return;
-  $("#edit-bm-id").value = bm.id;
-  $("#edit-bm-title").value = bm.title;
-  $("#edit-bm-url").value = bm.url;
-  $("#edit-bm-category").value = bm.category;
-  $("#edit-bm-notes").value = bm.notes;
-  openModal("modal-edit-bookmark");
-};
+// Event Delegation List Bookmark (Ubah / Hapus)
+bmList.addEventListener("click", e => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+
+  if (action === "edit-bm") {
+    const bm = bookmarks.find(b => b.id === id);
+    if (!bm) return;
+    $("#edit-bm-id").value = bm.id;
+    $("#edit-bm-title").value = bm.title;
+    $("#edit-bm-url").value = bm.url;
+    $("#edit-bm-category").value = bm.category;
+    $("#edit-bm-notes").value = bm.notes;
+    openModal("modal-edit-bookmark");
+  } 
+  else if (action === "delete-bm") {
+    deleteActionCallback = () => {
+      bookmarks = bookmarks.filter(b => b.id !== id);
+      saveBookmarks(); renderBookmarks();
+    };
+    openModal("modal-delete");
+  }
+});
 
 $("#edit-bookmark-form").addEventListener("submit", e => {
   e.preventDefault();
+  const urlVal = $("#edit-bm-url").value.trim();
+  if (!isValidURL(urlVal)) return alert("URL tidak valid! Wajib menyertakan http:// atau https://");
+
   const id = $("#edit-bm-id").value;
   const index = bookmarks.findIndex(b => b.id === id);
-  if(index !== -1) {
+  if (index !== -1) {
     bookmarks[index] = {
       ...bookmarks[index],
       title: $("#edit-bm-title").value.trim(),
-      url: ensureProtocol($("#edit-bm-url").value.trim()),
+      url: urlVal,
       category: $("#edit-bm-category").value.trim(),
       notes: $("#edit-bm-notes").value.trim()
     };
@@ -267,21 +334,13 @@ $("#edit-bookmark-form").addEventListener("submit", e => {
   }
 });
 
-window.deleteBookmarkConfirm = (id) => {
-  deleteActionCallback = () => {
-    bookmarks = bookmarks.filter(b => b.id !== id);
-    saveBookmarks(); renderBookmarks();
-  };
-  openModal("modal-delete");
-};
-
 $("#bm-search").addEventListener("input", renderBookmarks);
 $("#bm-sort").addEventListener("change", renderBookmarks);
 renderBookmarks();
 
 
 // ==========================================
-// 4. KUIS INTERAKTIF (Studi Kasus 3.3)
+// 5. KUIS INTERAKTIF
 // ==========================================
 const QUIZ_SCORE_KEY = "pabwe-p3-quiz-high";
 let quizHighScore = localStorage.getItem(QUIZ_SCORE_KEY) || 0;
@@ -292,7 +351,7 @@ const questions = [
   { q: "Untuk menerapkan gaya CSS utility-first, framework mana yang lazim digunakan?", opts: ["Bootstrap", "Tailwind CSS", "Foundation", "Materialize"], ans: 1 },
   { q: "Fungsi Array pada JavaScript untuk membuat array baru berisi hasil operasi setiap elemen adalah?", opts: [".map()", ".filter()", ".reduce()", ".forEach()"], ans: 0 },
   { q: "Format pertukaran data yang sering digunakan dalam RESTful API modern adalah?", opts: ["XML", "JSON", "YAML", "CSV"], ans: 1 },
-  { q: "Pada Object-Oriented Programming (OOP) di Java, pilar untuk menyembunyikan detail implementasi internal adalah?", opts: ["Polymorphism", "Inheritance", "Abstraction", "Encapsulation"], ans: 3 }
+  { q: "Pada Object-Oriented Programming (OOP), pilar untuk menyembunyikan detail implementasi adalah?", opts: ["Polymorphism", "Inheritance", "Abstraction", "Encapsulation"], ans: 3 }
 ];
 
 let currQIndex = 0;
@@ -349,7 +408,7 @@ function handleAnswer(selectedIndex, btnNode, correctIndex) {
     feedback.className = "p-3 rounded-lg text-sm font-bold text-center bg-emerald-100 text-emerald-800";
   } else {
     btnNode.classList.add("bg-rose-100", "border-rose-300", "text-rose-800");
-    allBtns[correctIndex].classList.add("bg-emerald-100", "border-emerald-300", "text-emerald-800"); // Tunjukkan jawaban benar
+    allBtns[correctIndex].classList.add("bg-emerald-100", "border-emerald-300", "text-emerald-800"); 
     feedback.textContent = "Jawaban Salah.";
     feedback.className = "p-3 rounded-lg text-sm font-bold text-center bg-rose-100 text-rose-800";
   }

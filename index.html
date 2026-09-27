@@ -54,15 +54,16 @@
 
       <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
         <h2 class="font-semibold text-lg mb-4">Tambah Transaksi</h2>
-        <form id="expense-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-          <input type="text" id="exp-title" placeholder="Deskripsi (Cth: Makan siang)" class="lg:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
-          <input type="text" id="exp-category" placeholder="Kategori (Cth: Makanan)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
-          <input type="number" id="exp-amount" placeholder="Nominal" min="1" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
-          <select id="exp-type" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-sky-500 focus:outline-none" required>
+        <form id="expense-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+          <input type="text" id="exp-title" placeholder="Deskripsi (Makan)" class="lg:col-span-3 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
+          <input type="text" id="exp-category" placeholder="Kategori" class="lg:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
+          <input type="number" id="exp-amount" placeholder="Nominal" min="1" step="any" class="lg:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
+          <select id="exp-type" class="lg:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-sky-500 focus:outline-none" required>
             <option value="Pengeluaran">Pengeluaran</option>
             <option value="Pemasukan">Pemasukan</option>
           </select>
-          <button type="submit" class="rounded-lg bg-sky-600 text-white font-semibold text-sm hover:bg-sky-700 transition">Simpan</button>
+          <input type="date" id="exp-date" class="lg:col-span-2 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
+          <button type="submit" class="lg:col-span-1 rounded-lg bg-sky-600 text-white font-semibold text-sm hover:bg-sky-700 transition">Simpan</button>
         </form>
       </div>
 
@@ -88,7 +89,7 @@
         <h2 class="font-semibold text-lg mb-4">Simpan Tautan Baru</h2>
         <form id="bookmark-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <input type="text" id="bm-title" placeholder="Judul Tautan" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
-          <input type="text" id="bm-url" placeholder="URL (Cth: cis.del.ac.id)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
+          <input type="text" id="bm-url" placeholder="URL (Cth: https://cis.del.ac.id)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
           <input type="text" id="bm-category" placeholder="Tag / Kategori" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required />
           <input type="text" id="bm-notes" placeholder="Catatan (Opsional)" class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" />
           <button type="submit" class="rounded-lg bg-sky-600 text-white font-semibold text-sm hover:bg-sky-700 transition">Tambah</button>
@@ -157,8 +158,9 @@
         <input type="hidden" id="edit-exp-id" />
         <div><label class="text-sm font-medium text-slate-700">Deskripsi</label><input type="text" id="edit-exp-title" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
         <div><label class="text-sm font-medium text-slate-700">Kategori</label><input type="text" id="edit-exp-category" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
+        <div><label class="text-sm font-medium text-slate-700">Tanggal</label><input type="date" id="edit-exp-date" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
         <div class="grid grid-cols-2 gap-3">
-          <div><label class="text-sm font-medium text-slate-700">Nominal</label><input type="number" id="edit-exp-amount" min="1" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
+          <div><label class="text-sm font-medium text-slate-700">Nominal</label><input type="number" id="edit-exp-amount" min="1" step="any" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
           <div><label class="text-sm font-medium text-slate-700">Tipe</label><select id="edit-exp-type" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-sky-500 focus:outline-none"><option value="Pengeluaran">Pengeluaran</option><option value="Pemasukan">Pemasukan</option></select></div>
         </div>
         <div class="flex gap-2 justify-end mt-5">
@@ -177,7 +179,7 @@
       <form id="edit-bookmark-form" class="space-y-3">
         <input type="hidden" id="edit-bm-id" />
         <div><label class="text-sm font-medium text-slate-700">Judul</label><input type="text" id="edit-bm-title" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
-        <div><label class="text-sm font-medium text-slate-700">URL</label><input type="text" id="edit-bm-url" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
+        <div><label class="text-sm font-medium text-slate-700">URL</label><input type="url" id="edit-bm-url" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
         <div><label class="text-sm font-medium text-slate-700">Kategori</label><input type="text" id="edit-bm-category" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" required /></div>
         <div><label class="text-sm font-medium text-slate-700">Catatan</label><input type="text" id="edit-bm-notes" class="w-full mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none" /></div>
         <div class="flex gap-2 justify-end mt-5">
@@ -207,4 +209,3 @@
   <script src="assets/script.js"></script>
 </body>
 </html>
-
