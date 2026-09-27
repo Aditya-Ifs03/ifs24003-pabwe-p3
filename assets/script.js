@@ -1,6 +1,6 @@
 /**
  * assets/script.js
- * PABWE Praktikum 3 - 100/100 Lighthouse & Accessibility Optimization
+ * PABWE Praktikum 3 - 100/100 Lighthouse & Axe Accessibility Optimization
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -11,7 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const $all = (selector) => document.querySelectorAll(selector);
   const formatRupiah = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
   
-  // Custom ID Generator
   const generateID = () => Date.now().toString() + Math.random().toString(36).substr(2, 9);
 
   let deleteActionCallback = null;
@@ -59,15 +58,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const isActive = btn.dataset.tab === tabId;
       btn.setAttribute("aria-selected", isActive);
       if(isActive) {
-        btn.classList.add("bg-sky-600", "text-white", "shadow");
-        btn.classList.remove("text-slate-600", "hover:bg-slate-100");
+        btn.classList.add("bg-sky-700", "text-white", "shadow");
+        btn.classList.remove("text-slate-700", "hover:bg-slate-100");
       } else {
-        btn.classList.remove("bg-sky-600", "text-white", "shadow");
-        btn.classList.add("text-slate-600", "hover:bg-slate-100");
+        btn.classList.remove("bg-sky-700", "text-white", "shadow");
+        btn.classList.add("text-slate-700", "hover:bg-slate-100");
       }
     });
 
-    // Replace State URL tanpa refresh
     const url = new URL(window.location);
     url.searchParams.set("tab", tabId);
     window.history.replaceState(null, "", url);
@@ -115,25 +113,26 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#exp-balance").textContent = formatRupiah(totalIn - totalOut);
 
     if (filtered.length === 0) {
-      expList.innerHTML = `<div class="p-4 text-center text-sm text-slate-600 bg-slate-50 rounded-lg border border-dashed border-slate-300">Data tidak ditemukan.</div>`;
+      expList.innerHTML = `<div role="listitem" class="p-4 text-center text-sm text-slate-700 bg-slate-50 rounded-lg border border-dashed border-slate-300">Data tidak ditemukan.</div>`;
       return;
     }
 
     filtered.forEach(exp => {
       const isIncome = exp.type === "Pemasukan";
       const div = document.createElement("div");
+      div.setAttribute("role", "listitem");
       div.className = "flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 rounded-lg hover:bg-slate-50 transition gap-3";
       div.innerHTML = `
         <div class="flex-1">
           <p class="font-semibold text-slate-800">${exp.title}</p>
           <div class="flex items-center gap-2 mt-1 text-xs">
             <span class="px-2 py-0.5 rounded-full ${isIncome ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'} font-medium">${exp.type}</span>
-            <span class="text-slate-600 bg-slate-200 px-2 py-0.5 rounded-full">${exp.category}</span>
-            <span class="text-slate-500">${new Date(exp.date).toLocaleDateString('id-ID')}</span>
+            <span class="text-slate-700 bg-slate-200 px-2 py-0.5 rounded-full">${exp.category}</span>
+            <span class="text-slate-600">${new Date(exp.date).toLocaleDateString('id-ID')}</span>
           </div>
         </div>
         <div class="flex items-center gap-4 shrink-0 justify-between sm:justify-end">
-          <span class="font-bold ${isIncome ? 'text-emerald-700' : 'text-rose-700'}">${isIncome ? '+' : '-'}${formatRupiah(exp.amount)}</span>
+          <span class="font-bold ${isIncome ? 'text-emerald-800' : 'text-rose-800'}">${isIncome ? '+' : '-'}${formatRupiah(exp.amount)}</span>
           <div class="flex gap-2">
             <button data-action="edit-exp" data-id="${exp.id}" aria-label="Ubah transaksi" class="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-sky-700 hover:border-sky-300 flex items-center justify-center transition"><i class="ti ti-pencil pointer-events-none" aria-hidden="true"></i></button>
             <button data-action="delete-exp" data-id="${exp.id}" aria-label="Hapus transaksi" class="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-rose-700 hover:border-rose-300 flex items-center justify-center transition"><i class="ti ti-trash pointer-events-none" aria-hidden="true"></i></button>
@@ -164,7 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
     $("#exp-date").valueAsDate = new Date();
   });
 
-  // Event Delegation: Ubah / Hapus Expense
   expList.addEventListener("click", e => {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
@@ -227,7 +225,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function saveBookmarks() { localStorage.setItem(BM_KEY, JSON.stringify(bookmarks)); }
 
-  // Validasi Skema Strict
   function isValidURL(string) {
     try {
       const url = new URL(string);
@@ -254,21 +251,22 @@ document.addEventListener("DOMContentLoaded", () => {
     bmList.innerHTML = "";
 
     if (filtered.length === 0) {
-      bmList.innerHTML = `<div class="col-span-full p-6 text-center text-sm text-slate-600 bg-slate-50 rounded-xl border border-dashed border-slate-300">Tidak ada tautan yang disimpan.</div>`;
+      bmList.innerHTML = `<div role="listitem" class="col-span-full p-6 text-center text-sm text-slate-700 bg-slate-50 rounded-xl border border-dashed border-slate-300">Tidak ada tautan yang disimpan.</div>`;
       return;
     }
 
     filtered.forEach(bm => {
       const card = document.createElement("div");
+      card.setAttribute("role", "listitem");
       card.className = "flex flex-col p-4 border border-slate-200 rounded-xl hover:shadow-md transition bg-white relative group";
       card.innerHTML = `
         <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition flex gap-1 bg-white p-1 rounded-lg shadow-sm border border-slate-100">
-          <button data-action="edit-bm" data-id="${bm.id}" aria-label="Ubah bookmark" class="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-sky-700 rounded"><i class="ti ti-pencil pointer-events-none" aria-hidden="true"></i></button>
-          <button data-action="delete-bm" data-id="${bm.id}" aria-label="Hapus bookmark" class="w-7 h-7 flex items-center justify-center text-slate-500 hover:text-rose-700 rounded"><i class="ti ti-trash pointer-events-none" aria-hidden="true"></i></button>
+          <button data-action="edit-bm" data-id="${bm.id}" aria-label="Ubah bookmark" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-sky-700 rounded"><i class="ti ti-pencil pointer-events-none" aria-hidden="true"></i></button>
+          <button data-action="delete-bm" data-id="${bm.id}" aria-label="Hapus bookmark" class="w-7 h-7 flex items-center justify-center text-slate-600 hover:text-rose-700 rounded"><i class="ti ti-trash pointer-events-none" aria-hidden="true"></i></button>
         </div>
         <span class="inline-block px-2 py-1 bg-sky-100 text-sky-800 text-xs font-semibold rounded-md w-fit mb-3">${bm.category}</span>
         <h3 class="font-bold text-slate-900 truncate pr-14">${bm.title}</h3>
-        <p class="text-xs text-slate-600 mt-1 line-clamp-2 min-h-[2rem]">${bm.notes || 'Tidak ada catatan'}</p>
+        <p class="text-xs text-slate-700 mt-1 line-clamp-2 min-h-[2rem]">${bm.notes || 'Tidak ada catatan'}</p>
         <a href="${bm.url}" target="_blank" rel="noopener noreferrer" class="mt-4 flex items-center gap-1 text-sm font-semibold text-sky-700 hover:text-sky-900 w-fit">
           Kunjungi Link <i class="ti ti-external-link" aria-hidden="true"></i>
         </a>
@@ -293,7 +291,6 @@ document.addEventListener("DOMContentLoaded", () => {
     saveBookmarks(); renderBookmarks(); bmForm.reset();
   });
 
-  // Event Delegation: Ubah / Hapus Bookmark
   bmList.addEventListener("click", e => {
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
@@ -389,7 +386,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const btn = document.createElement("button");
       btn.className = "w-full text-left px-4 py-3 border border-slate-200 rounded-lg hover:bg-slate-100 transition font-medium text-slate-800 quiz-opt-btn";
       btn.textContent = opt;
-      btn.setAttribute("aria-label", `Pilih jawaban: ${opt}`);
       btn.addEventListener("click", () => handleAnswer(index, btn, qData.ans));
       optionsContainer.appendChild(btn);
     });
